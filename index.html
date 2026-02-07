@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PC DiagnostiX - Professional Troubleshooting Suite</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="app-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <rect x="4" y="4" width="24" height="24" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 12L20 20M20 12L12 20" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="16" cy="16" r="3" fill="currentColor"/>
+                    </svg>
+                    <span class="logo-text">PC DiagnostiX</span>
+                </div>
+                <div class="header-controls">
+                    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                        <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"/>
+                            <line x1="12" y1="1" x2="12" y2="3"/>
+                            <line x1="12" y1="21" x2="12" y2="23"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                            <line x1="1" y1="12" x2="3" y2="12"/>
+                            <line x1="21" y1="12" x2="23" y2="12"/>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                        </svg>
+                        <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                    </button>
+                    <button class="lang-toggle" id="langToggle">
+                        <span class="lang-label">EN</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="diagnostic-wrapper">
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">
+                    <span data-en="Step" data-el="Βήμα">Step</span> <span id="currentStep">1</span>
+                </div>
+            </div>
+
+            <!-- Wizard Container -->
+            <div class="wizard-card" id="wizardCard">
+                <div class="step-badge" id="stepBadge">INITIAL DIAGNOSTIC</div>
+
+                <h2 class="question-title" id="questionTitle">
+                    What happens when you press the power button?
+                </h2>
+
+                <div class="options-grid" id="optionsGrid">
+                    <!-- Options will be dynamically inserted -->
+                </div>
+
+                <button class="back-btn" id="backBtn" style="display: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    <span data-en="Back" data-el="Πίσω">Back</span>
+                </button>
+            </div>
+
+            <!-- Results Container -->
+            <div class="result-card" id="resultCard" style="display: none;">
+                <div class="result-header">
+                    <div class="severity-badge" id="severityBadge">CRITICAL</div>
+                    <h2 class="result-title" id="resultTitle">Diagnosis Complete</h2>
+                </div>
+
+                <div class="result-content" id="resultContent">
+                    <!-- Dynamic result content -->
+                </div>
+
+                <div class="result-tools" id="resultTools">
+                    <!-- Recommended tools will appear here -->
+                </div>
+
+                <div class="result-actions">
+                    <button class="btn-secondary" id="exportBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        <span data-en="Export Report" data-el="Εξαγωγή Αναφοράς">Export Report</span>
+                    </button>
+                    <button class="btn-primary" id="restartBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                        </svg>
+                        <span data-en="Start New Diagnostic" data-el="Νέα Διάγνωση">Start New Diagnostic</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal Footer -->
+        <div class="terminal-footer">
+            <div class="terminal-line">
+                <span class="prompt">$</span>
+                <span class="terminal-text" data-en="System diagnostic engine initialized..." data-el="Μηχανή διαγνωστικών συστήματος ενεργοποιήθηκε...">System diagnostic engine initialized...</span>
+                <span class="cursor-blink">_</span>
+            </div>
+        </div>
+    </main>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
