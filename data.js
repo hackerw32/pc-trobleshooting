@@ -35,6 +35,15 @@ const diagnosticData = {
         },
 
         no_post: {
+            label: "DISPLAY CHECK",
+            question: "Have you verified that the monitor is working and properly connected?",
+            options: [
+                { text: "Yes, monitor and cables are fine", next: "no_post_confirmed" },
+                { text: "Not sure / Haven't checked", next: "res_display_check" }
+            ]
+        },
+
+        no_post_confirmed: {
             label: "POST FAILURE ANALYSIS",
             question: "Do you hear any beep codes from the motherboard?",
             options: [
@@ -129,6 +138,22 @@ const diagnosticData = {
         },
 
         // RESULTS
+        res_display_check: {
+            severity: "info",
+            title: "Display Connection Check",
+            content: `<p>A black screen doesn't always mean a POST failure. Before deeper diagnosis, verify your display setup:</p>
+                <ul>
+                    <li><strong>Check the cable:</strong> Ensure HDMI, DisplayPort, or VGA cable is firmly connected at both ends</li>
+                    <li><strong>Correct port:</strong> If you have a dedicated GPU, connect the monitor to the GPU ports (not the motherboard ports)</li>
+                    <li><strong>Monitor input:</strong> Press the Input/Source button on your monitor to select the correct input (HDMI, DP, etc.)</li>
+                    <li><strong>Try another cable:</strong> Cables can fail - test with a different one if available</li>
+                    <li><strong>Test the monitor:</strong> Connect to another device (laptop, console) to verify it works</li>
+                    <li><strong>Try another port:</strong> If your GPU has multiple outputs, try a different one</li>
+                </ul>
+                <p><strong>If the monitor works fine with another device,</strong> go back and select "Yes, monitor and cables are fine" to continue diagnosis.</p>`,
+            tools: []
+        },
+
         res_power_basics: {
             severity: "info",
             title: "Basic Power Check",
@@ -181,9 +206,10 @@ const diagnosticData = {
                     <li>Perform a hard reset: Hold power button for 30-60 seconds</li>
                     <li>Try booting with all peripherals disconnected</li>
                     <li>Check if Caps Lock light responds when pressed</li>
-                </ul>`,
+                </ul>
+                <p><strong>If the laptop starts working:</strong> Use the tool below to check your battery health and determine if it needs replacement.</p>`,
             tools: [
-                { name: "BatteryInfoView", desc: "Check battery health and cycles", url: "https://www.nirsoft.net/utils/battery_information_view.html" }
+                { name: "BatteryInfoView", desc: "Check battery health once laptop is running", url: "https://www.nirsoft.net/utils/battery_information_view.html" }
             ]
         },
 
@@ -207,17 +233,18 @@ const diagnosticData = {
         },
 
         res_beeps: {
-            severity: "info",
+            severity: "warning",
             title: "BIOS Beep Code Diagnosis",
             content: `<p>Your motherboard is using beep codes to tell you what's wrong. The number and pattern of beeps indicates the specific issue.</p>
-                <p><strong>Common beep patterns:</strong></p>
+                <p><strong>Common beep patterns (AMI BIOS):</strong></p>
                 <ul>
-                    <li><strong>1 long, 2 short:</strong> Video card error</li>
-                    <li><strong>Continuous beeping:</strong> Memory (RAM) problem</li>
+                    <li><strong>1 long, 2 short:</strong> Video card / display adapter error</li>
+                    <li><strong>Continuous beeping:</strong> Memory (RAM) not detected or failure</li>
                     <li><strong>1 long, 3 short:</strong> Video card not detected</li>
-                    <li><strong>Repeating short beeps:</strong> Power supply issue</li>
+                    <li><strong>Repeating short beeps:</strong> Memory refresh failure or power issue</li>
+                    <li><strong>Single short beep:</strong> Normal POST - system is OK</li>
                 </ul>
-                <p>The exact meaning depends on your BIOS manufacturer (AMI, Award, Phoenix). Use the tool below to decode your specific beep pattern.</p>`,
+                <p><strong>Important:</strong> Beep codes vary significantly between BIOS manufacturers (AMI, Award, Phoenix, UEFI). The patterns above are for AMI BIOS. Use the tool below to decode your specific beep pattern based on your motherboard's BIOS manufacturer.</p>`,
             tools: [
                 { name: "Beep Codes Database", desc: "Decode BIOS beep codes", url: "https://www.computerhope.com/beep.htm" }
             ]
@@ -264,21 +291,24 @@ const diagnosticData = {
 
         res_ram_logic: {
             severity: "critical",
-            title: "Memory (RAM) Failure Detected",
-            content: `<p>Random crashes and BSODs, especially with errors like "MEMORY_MANAGEMENT" or "IRQL_NOT_LESS_OR_EQUAL", indicate RAM failure.</p>
-                <p><strong>Why RAM fails:</strong></p>
+            title: "Memory (RAM) or Driver Failure",
+            content: `<p>Random crashes and BSODs without recent changes can indicate hardware or driver issues:</p>
+                <p><strong>Common BSOD codes and their causes:</strong></p>
                 <ul>
-                    <li>Manufacturing defects</li>
-                    <li>Overheating or voltage issues</li>
-                    <li>Age and degradation</li>
-                    <li>Physical damage or poor connections</li>
+                    <li><strong>MEMORY_MANAGEMENT:</strong> Usually points to faulty RAM</li>
+                    <li><strong>IRQL_NOT_LESS_OR_EQUAL:</strong> Often caused by faulty drivers (network, GPU, antivirus), but can also indicate RAM issues</li>
+                    <li><strong>KERNEL_DATA_INPAGE_ERROR:</strong> Can indicate disk or RAM problems</li>
+                    <li><strong>PAGE_FAULT_IN_NONPAGED_AREA:</strong> RAM or driver issue</li>
                 </ul>
-                <p><strong>Diagnosis and fix:</strong></p>
+                <p><strong>Diagnosis steps (in order):</strong></p>
                 <ul>
-                    <li>Run MemTest86 for at least 4 full passes (8+ hours)</li>
-                    <li>Test each RAM stick individually</li>
-                    <li>Check Windows Event Viewer for memory errors</li>
-                    <li>Replace any stick that shows errors</li>
+                    <li>Use BlueScreenView to identify the exact BSOD error code and faulting driver</li>
+                    <li>If a specific driver is listed as the cause, update or roll back that driver first</li>
+                    <li>Run <code>sfc /scannow</code> and <code>DISM /Online /Cleanup-Image /RestoreHealth</code> to check for Windows corruption</li>
+                    <li>Run MemTest86 for at least 4 full passes (8+ hours) to test RAM</li>
+                    <li>Test each RAM stick individually in different slots</li>
+                    <li>Check Windows Event Viewer for memory or hardware errors</li>
+                    <li>Replace any RAM stick that shows errors in MemTest86</li>
                 </ul>`,
             tools: [
                 { name: "MemTest86", desc: "Professional memory diagnostic tool", url: "https://www.memtest86.com/" },
@@ -326,14 +356,15 @@ const diagnosticData = {
                 </ul>
                 <p><strong>Fix steps:</strong></p>
                 <ul>
-                    <li>Boot into Safe Mode (F8 during startup)</li>
+                    <li>Boot into Safe Mode: Hold <strong>Shift</strong> and click <strong>Restart</strong>, then Troubleshoot → Advanced Options → Startup Settings (note: F8 does NOT work by default in Windows 10/11)</li>
                     <li>Use Device Manager to roll back recent driver updates</li>
                     <li>Disable startup programs via Task Manager → Startup tab</li>
                     <li>Run System File Checker: <code>sfc /scannow</code></li>
+                    <li>Run DISM repair: <code>DISM /Online /Cleanup-Image /RestoreHealth</code></li>
                     <li>Use System Restore to revert to working state</li>
                 </ul>`,
             tools: [
-                { name: "Autoruns", desc: "Advanced startup program manager", url: "https://docs.microsoft.com/en-us/sysinternals/downloads/autoruns" },
+                { name: "Autoruns", desc: "Advanced startup program manager", url: "https://learn.microsoft.com/en-us/sysinternals/downloads/autoruns" },
                 { name: "DriverView", desc: "View all installed drivers", url: "https://www.nirsoft.net/utils/driverview.html" }
             ]
         },
@@ -369,8 +400,8 @@ const diagnosticData = {
                     <li><strong>Check event logs:</strong> Windows Event Viewer shows detailed crash info</li>
                 </ul>`,
             tools: [
-                { name: "Event Viewer", desc: "Windows system logs", url: "eventvwr.msc" },
-                { name: "Dependency Walker", desc: "Analyze program dependencies", url: "http://www.dependencywalker.com/" }
+                { name: "Event Viewer", desc: "Windows system logs (run eventvwr.msc from Start)", url: "https://learn.microsoft.com/en-us/shows/inside/event-viewer" },
+                { name: "Dependencies", desc: "Modern dependency analyzer (replaces Dependency Walker)", url: "https://github.com/lucasg/Dependencies" }
             ]
         },
 
@@ -386,16 +417,23 @@ const diagnosticData = {
                 <p><strong>Repair methods:</strong></p>
                 <ul>
                     <li><strong>Automatic Repair:</strong> Boot from Windows installation media → Repair Your Computer</li>
-                    <li><strong>Command Prompt fixes:</strong>
+                    <li><strong>For Legacy BIOS/MBR systems:</strong>
                         <ul>
                             <li><code>bootrec /fixmbr</code> - Fix master boot record</li>
                             <li><code>bootrec /fixboot</code> - Write new boot sector</li>
                             <li><code>bootrec /rebuildbcd</code> - Rebuild boot configuration</li>
-                            <li><code>chkdsk C: /f /r</code> - Scan and repair disk</li>
                         </ul>
                     </li>
+                    <li><strong>For UEFI/GPT systems (most modern PCs):</strong>
+                        <ul>
+                            <li><code>bootrec /rebuildbcd</code> - Rebuild boot configuration</li>
+                            <li><code>bcdboot C:\\Windows /s S: /f UEFI</code> - Rebuild UEFI bootloader (S: = EFI partition)</li>
+                        </ul>
+                    </li>
+                    <li><code>chkdsk C: /f /r</code> - Scan and repair disk errors</li>
                     <li>Check disk health with CrystalDiskInfo before repairs</li>
-                </ul>`,
+                </ul>
+                <p><strong>Note:</strong> <code>bootrec /fixboot</code> may return "Access is denied" on some Windows 10/11 installations. Use <code>bcdboot</code> instead in that case.</p>`,
             tools: [
                 { name: "CrystalDiskInfo", desc: "Check drive health (S.M.A.R.T.)", url: "https://crystalmark.info/en/software/crystaldiskinfo/" },
                 { name: "Windows Media Creation Tool", desc: "Create recovery USB", url: "https://www.microsoft.com/software-download/windows11" },
@@ -474,7 +512,7 @@ const diagnosticData = {
                     <li><strong>Increase virtual memory:</strong> If RAM is low</li>
                 </ul>`,
             tools: [
-                { name: "CCleaner", desc: "System cleanup utility", url: "https://www.ccleaner.com/" },
+                { name: "Windows Disk Cleanup", desc: "Built-in cleanup (run cleanmgr from Start)", url: "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/cleanmgr" },
                 { name: "Malwarebytes", desc: "Malware scanner", url: "https://www.malwarebytes.com/" },
                 { name: "TreeSize Free", desc: "Disk space analyzer", url: "https://www.jam-software.com/treesize_free" }
             ]
@@ -500,7 +538,7 @@ const diagnosticData = {
                 <p><strong>Pro tip:</strong> Clone your drive to a new one before it fails completely.</p>`,
             tools: [
                 { name: "CrystalDiskInfo", desc: "S.M.A.R.T. monitoring", url: "https://crystalmark.info/en/software/crystaldiskinfo/" },
-                { name: "Macrium Reflect", desc: "Drive cloning software", url: "https://www.macrium.com/reflectfree" },
+                { name: "Clonezilla", desc: "Free open-source drive cloning", url: "https://clonezilla.org/" },
                 { name: "Hard Disk Sentinel", desc: "Advanced health monitoring", url: "https://www.hdsentinel.com/" }
             ]
         },
@@ -544,7 +582,7 @@ const diagnosticData = {
                     <li>Consider fan replacement if noise persists</li>
                 </ul>`,
             tools: [
-                { name: "SpeedFan", desc: "Monitor and control fan speeds", url: "http://www.almico.com/speedfan.php" },
+                { name: "FanControl", desc: "Modern fan speed control software", url: "https://getfancontrol.com/" },
                 { name: "HWiNFO", desc: "Hardware monitoring", url: "https://www.hwinfo.com/" }
             ]
         },
@@ -563,9 +601,10 @@ const diagnosticData = {
                 </ul>
                 <p><strong>Safe temperature ranges:</strong></p>
                 <ul>
-                    <li>CPU idle: 30-50°C | Load: 60-80°C</li>
+                    <li>CPU idle: 30-50°C | Load: 65-85°C (some modern CPUs can safely reach 90-95°C)</li>
                     <li>GPU idle: 30-45°C | Load: 65-85°C</li>
-                </ul>`,
+                </ul>
+                <p><strong>Note:</strong> Check your specific CPU/GPU manufacturer specs for maximum safe temperatures. Modern Intel CPUs (12th-14th gen) often run hotter by design.</p>`,
             tools: [
                 { name: "HWiNFO64", desc: "Real-time temperature monitoring", url: "https://www.hwinfo.com/" },
                 { name: "Core Temp", desc: "CPU temperature monitor", url: "https://www.alcpu.com/CoreTemp/" },
@@ -633,6 +672,15 @@ const diagnosticData = {
         },
 
         no_post: {
+            label: "ΕΛΕΓΧΟΣ ΟΘΟΝΗΣ",
+            question: "Έχετε επιβεβαιώσει ότι η οθόνη λειτουργεί και είναι σωστά συνδεδεμένη;",
+            options: [
+                { text: "Ναι, η οθόνη και τα καλώδια είναι εντάξει", next: "no_post_confirmed" },
+                { text: "Δεν είμαι σίγουρος / Δεν το έλεγξα", next: "res_display_check" }
+            ]
+        },
+
+        no_post_confirmed: {
             label: "ΑΝΑΛΥΣΗ ΑΠΟΤΥΧΙΑΣ POST",
             question: "Ακούγονται χαρακτηριστικοί ήχοι (beeps) από τη μητρική;",
             options: [
@@ -727,6 +775,22 @@ const diagnosticData = {
         },
 
         // Greek Results
+        res_display_check: {
+            severity: "info",
+            title: "Έλεγχος Σύνδεσης Οθόνης",
+            content: `<p>Μια μαύρη οθόνη δεν σημαίνει πάντα αποτυχία POST. Πριν προχωρήσετε σε βαθύτερη διάγνωση, ελέγξτε τη σύνδεση της οθόνης:</p>
+                <ul>
+                    <li><strong>Ελέγξτε το καλώδιο:</strong> Βεβαιωθείτε ότι το HDMI, DisplayPort ή VGA καλώδιο είναι σταθερά συνδεδεμένο και στις δύο άκρες</li>
+                    <li><strong>Σωστή θύρα:</strong> Αν έχετε αποκλειστική GPU, συνδέστε την οθόνη στις θύρες της GPU (όχι στις θύρες της μητρικής)</li>
+                    <li><strong>Είσοδος οθόνης:</strong> Πατήστε το κουμπί Input/Source στην οθόνη σας για να επιλέξετε τη σωστή είσοδο (HDMI, DP, κλπ.)</li>
+                    <li><strong>Δοκιμάστε άλλο καλώδιο:</strong> Τα καλώδια μπορεί να χαλάσουν - δοκιμάστε με διαφορετικό αν έχετε</li>
+                    <li><strong>Τεστ οθόνης:</strong> Συνδέστε σε άλλη συσκευή (laptop, κονσόλα) για να επιβεβαιώσετε ότι λειτουργεί</li>
+                    <li><strong>Δοκιμάστε άλλη θύρα:</strong> Αν η GPU σας έχει πολλές εξόδους, δοκιμάστε διαφορετική</li>
+                </ul>
+                <p><strong>Αν η οθόνη λειτουργεί κανονικά με άλλη συσκευή,</strong> γυρίστε πίσω και επιλέξτε "Ναι, η οθόνη και τα καλώδια είναι εντάξει" για να συνεχίσετε τη διάγνωση.</p>`,
+            tools: []
+        },
+
         res_power_basics: {
             severity: "info",
             title: "Βασικός Έλεγχος Ρεύματος",
@@ -779,9 +843,10 @@ const diagnosticData = {
                     <li>Κάντε hard reset: Κρατήστε το κουμπί power για 30-60 δευτερόλεπτα</li>
                     <li>Δοκιμάστε εκκίνηση με όλα τα περιφερειακά αποσυνδεδεμένα</li>
                     <li>Ελέγξτε αν το φως Caps Lock ανταποκρίνεται όταν πατιέται</li>
-                </ul>`,
+                </ul>
+                <p><strong>Αν το laptop αρχίσει να λειτουργεί:</strong> Χρησιμοποιήστε το παρακάτω εργαλείο για να ελέγξετε την υγεία της μπαταρίας και αν χρειάζεται αντικατάσταση.</p>`,
             tools: [
-                { name: "BatteryInfoView", desc: "Έλεγχος υγείας και κύκλων μπαταρίας", url: "https://www.nirsoft.net/utils/battery_information_view.html" }
+                { name: "BatteryInfoView", desc: "Έλεγχος υγείας μπαταρίας μόλις λειτουργήσει το laptop", url: "https://www.nirsoft.net/utils/battery_information_view.html" }
             ]
         },
 
@@ -805,17 +870,18 @@ const diagnosticData = {
         },
 
         res_beeps: {
-            severity: "info",
+            severity: "warning",
             title: "Διάγνωση μέσω Beep Codes του BIOS",
             content: `<p>Η μητρική σας χρησιμοποιεί beep codes για να σας πει τι πάει στραβά. Ο αριθμός και το μοτίβο των ήχων υποδεικνύει το συγκεκριμένο πρόβλημα.</p>
-                <p><strong>Συνηθισμένα μοτίβα beep:</strong></p>
+                <p><strong>Συνηθισμένα μοτίβα beep (AMI BIOS):</strong></p>
                 <ul>
-                    <li><strong>1 μακρύ, 2 σύντομα:</strong> Σφάλμα κάρτας γραφικών</li>
-                    <li><strong>Συνεχόμενο μπιπ:</strong> Πρόβλημα μνήμης (RAM)</li>
+                    <li><strong>1 μακρύ, 2 σύντομα:</strong> Σφάλμα κάρτας γραφικών / προσαρμογέα οθόνης</li>
+                    <li><strong>Συνεχόμενο μπιπ:</strong> Μνήμη (RAM) δεν ανιχνεύθηκε ή αστοχία</li>
                     <li><strong>1 μακρύ, 3 σύντομα:</strong> Κάρτα γραφικών δεν εντοπίστηκε</li>
-                    <li><strong>Επαναλαμβανόμενα σύντομα μπιπ:</strong> Πρόβλημα τροφοδοσίας</li>
+                    <li><strong>Επαναλαμβανόμενα σύντομα μπιπ:</strong> Αστοχία ανανέωσης μνήμης ή πρόβλημα τροφοδοσίας</li>
+                    <li><strong>Ένα σύντομο μπιπ:</strong> Κανονικό POST - το σύστημα είναι OK</li>
                 </ul>
-                <p>Η ακριβής σημασία εξαρτάται από τον κατασκευαστή του BIOS σας (AMI, Award, Phoenix). Χρησιμοποιήστε το παρακάτω εργαλείο για να αποκωδικοποιήσετε το συγκεκριμένο μοτίβο σας.</p>`,
+                <p><strong>Σημαντικό:</strong> Τα beep codes διαφέρουν σημαντικά μεταξύ κατασκευαστών BIOS (AMI, Award, Phoenix, UEFI). Τα παραπάνω μοτίβα αφορούν AMI BIOS. Χρησιμοποιήστε το παρακάτω εργαλείο για να αποκωδικοποιήσετε το συγκεκριμένο μοτίβο σας βάσει του κατασκευαστή BIOS της μητρικής σας.</p>`,
             tools: [
                 { name: "Βάση Δεδομένων Beep Codes", desc: "Αποκωδικοποίηση beep codes BIOS", url: "https://www.computerhope.com/beep.htm" }
             ]
@@ -862,21 +928,24 @@ const diagnosticData = {
 
         res_ram_logic: {
             severity: "critical",
-            title: "Ανιχνεύθηκε Βλάβη Μνήμης (RAM)",
-            content: `<p>Τυχαία crashes και BSODs, ειδικά με σφάλματα όπως "MEMORY_MANAGEMENT" ή "IRQL_NOT_LESS_OR_EQUAL", υποδηλώνουν βλάβη RAM.</p>
-                <p><strong>Γιατί αποτυγχάνει η RAM:</strong></p>
+            title: "Βλάβη Μνήμης (RAM) ή Driver",
+            content: `<p>Τυχαία crashes και BSODs χωρίς πρόσφατες αλλαγές μπορεί να υποδηλώνουν πρόβλημα hardware ή driver:</p>
+                <p><strong>Συνηθισμένοι κωδικοί BSOD και αιτίες:</strong></p>
                 <ul>
-                    <li>Ελαττώματα κατασκευής</li>
-                    <li>Υπερθέρμανση ή προβλήματα τάσης</li>
-                    <li>Ηλικία και φθορά</li>
-                    <li>Φυσική ζημιά ή κακές συνδέσεις</li>
+                    <li><strong>MEMORY_MANAGEMENT:</strong> Συνήθως δείχνει ελαττωματική RAM</li>
+                    <li><strong>IRQL_NOT_LESS_OR_EQUAL:</strong> Συχνά προκαλείται από ελαττωματικούς drivers (δικτύου, GPU, antivirus), αλλά μπορεί να υποδηλώνει και πρόβλημα RAM</li>
+                    <li><strong>KERNEL_DATA_INPAGE_ERROR:</strong> Μπορεί να υποδηλώνει πρόβλημα δίσκου ή RAM</li>
+                    <li><strong>PAGE_FAULT_IN_NONPAGED_AREA:</strong> Πρόβλημα RAM ή driver</li>
                 </ul>
-                <p><strong>Διάγνωση και επισκευή:</strong></p>
+                <p><strong>Βήματα διάγνωσης (με σειρά):</strong></p>
                 <ul>
-                    <li>Τρέξτε το MemTest86 για τουλάχιστον 4 πλήρεις περάσεις (8+ ώρες)</li>
-                    <li>Δοκιμάστε κάθε RAM ξεχωριστά</li>
-                    <li>Ελέγξτε το Windows Event Viewer για σφάλματα μνήμης</li>
-                    <li>Αντικαταστήστε οποιαδήποτε μνήμη που εμφανίζει σφάλματα</li>
+                    <li>Χρησιμοποιήστε το BlueScreenView για να εντοπίσετε τον ακριβή κωδικό BSOD και τον ελαττωματικό driver</li>
+                    <li>Αν εμφανίζεται συγκεκριμένος driver ως αιτία, ενημερώστε ή επαναφέρετε αυτόν τον driver πρώτα</li>
+                    <li>Τρέξτε <code>sfc /scannow</code> και <code>DISM /Online /Cleanup-Image /RestoreHealth</code> για έλεγχο καταστροφής Windows</li>
+                    <li>Τρέξτε το MemTest86 για τουλάχιστον 4 πλήρεις περάσεις (8+ ώρες) για έλεγχο RAM</li>
+                    <li>Δοκιμάστε κάθε RAM ξεχωριστά σε διαφορετικές θύρες</li>
+                    <li>Ελέγξτε το Windows Event Viewer για σφάλματα μνήμης ή hardware</li>
+                    <li>Αντικαταστήστε οποιαδήποτε μνήμη που εμφανίζει σφάλματα στο MemTest86</li>
                 </ul>`,
             tools: [
                 { name: "MemTest86", desc: "Επαγγελματικό εργαλείο διάγνωσης μνήμης", url: "https://www.memtest86.com/" },
@@ -924,14 +993,15 @@ const diagnosticData = {
                 </ul>
                 <p><strong>Βήματα επισκευής:</strong></p>
                 <ul>
-                    <li>Εκκίνηση σε Safe Mode (F8 κατά την εκκίνηση)</li>
+                    <li>Εκκίνηση σε Safe Mode: Κρατήστε <strong>Shift</strong> και πατήστε <strong>Restart</strong>, μετά Troubleshoot → Advanced Options → Startup Settings (σημείωση: το F8 ΔΕΝ λειτουργεί σε Windows 10/11 by default)</li>
                     <li>Χρησιμοποιήστε το Device Manager για να επαναφέρετε πρόσφατες ενημερώσεις drivers</li>
                     <li>Απενεργοποιήστε προγράμματα εκκίνησης μέσω Task Manager → καρτέλα Startup</li>
                     <li>Τρέξτε το System File Checker: <code>sfc /scannow</code></li>
+                    <li>Τρέξτε επισκευή DISM: <code>DISM /Online /Cleanup-Image /RestoreHealth</code></li>
                     <li>Χρησιμοποιήστε το System Restore για επαναφορά σε λειτουργική κατάσταση</li>
                 </ul>`,
             tools: [
-                { name: "Autoruns", desc: "Προηγμένος διαχειριστής προγραμμάτων εκκίνησης", url: "https://docs.microsoft.com/en-us/sysinternals/downloads/autoruns" },
+                { name: "Autoruns", desc: "Προηγμένος διαχειριστής προγραμμάτων εκκίνησης", url: "https://learn.microsoft.com/en-us/sysinternals/downloads/autoruns" },
                 { name: "DriverView", desc: "Προβολή όλων των εγκατεστημένων drivers", url: "https://www.nirsoft.net/utils/driverview.html" }
             ]
         },
@@ -967,8 +1037,8 @@ const diagnosticData = {
                     <li><strong>Ελέγξτε event logs:</strong> Το Windows Event Viewer δείχνει λεπτομερείς πληροφορίες crash</li>
                 </ul>`,
             tools: [
-                { name: "Event Viewer", desc: "Αρχεία καταγραφής συστήματος Windows", url: "eventvwr.msc" },
-                { name: "Dependency Walker", desc: "Ανάλυση εξαρτήσεων προγράμματος", url: "http://www.dependencywalker.com/" }
+                { name: "Event Viewer", desc: "Αρχεία καταγραφής συστήματος Windows (τρέξτε eventvwr.msc από Start)", url: "https://learn.microsoft.com/en-us/shows/inside/event-viewer" },
+                { name: "Dependencies", desc: "Σύγχρονος αναλυτής εξαρτήσεων (αντικαθιστά το Dependency Walker)", url: "https://github.com/lucasg/Dependencies" }
             ]
         },
 
@@ -984,16 +1054,23 @@ const diagnosticData = {
                 <p><strong>Μέθοδοι επισκευής:</strong></p>
                 <ul>
                     <li><strong>Automatic Repair:</strong> Εκκίνηση από μέσο εγκατάστασης Windows → Repair Your Computer</li>
-                    <li><strong>Διορθώσεις Command Prompt:</strong>
+                    <li><strong>Για Legacy BIOS/MBR συστήματα:</strong>
                         <ul>
                             <li><code>bootrec /fixmbr</code> - Διόρθωση master boot record</li>
                             <li><code>bootrec /fixboot</code> - Εγγραφή νέου boot sector</li>
                             <li><code>bootrec /rebuildbcd</code> - Ανακατασκευή boot configuration</li>
-                            <li><code>chkdsk C: /f /r</code> - Σάρωση και επισκευή δίσκου</li>
                         </ul>
                     </li>
+                    <li><strong>Για UEFI/GPT συστήματα (τα περισσότερα σύγχρονα PC):</strong>
+                        <ul>
+                            <li><code>bootrec /rebuildbcd</code> - Ανακατασκευή boot configuration</li>
+                            <li><code>bcdboot C:\\Windows /s S: /f UEFI</code> - Ανακατασκευή UEFI bootloader (S: = EFI partition)</li>
+                        </ul>
+                    </li>
+                    <li><code>chkdsk C: /f /r</code> - Σάρωση και επισκευή σφαλμάτων δίσκου</li>
                     <li>Ελέγξτε την υγεία του δίσκου με CrystalDiskInfo πριν τις επισκευές</li>
-                </ul>`,
+                </ul>
+                <p><strong>Σημείωση:</strong> Η εντολή <code>bootrec /fixboot</code> μπορεί να επιστρέψει "Access is denied" σε ορισμένες εγκαταστάσεις Windows 10/11. Χρησιμοποιήστε <code>bcdboot</code> αντ' αυτού σε αυτήν την περίπτωση.</p>`,
             tools: [
                 { name: "CrystalDiskInfo", desc: "Έλεγχος υγείας δίσκου (S.M.A.R.T.)", url: "https://crystalmark.info/en/software/crystaldiskinfo/" },
                 { name: "Windows Media Creation Tool", desc: "Δημιουργία USB ανάκτησης", url: "https://www.microsoft.com/software-download/windows11" },
@@ -1072,7 +1149,7 @@ const diagnosticData = {
                     <li><strong>Αύξηση εικονικής μνήμης:</strong> Αν η RAM είναι χαμηλή</li>
                 </ul>`,
             tools: [
-                { name: "CCleaner", desc: "Βοηθητικό πρόγραμμα καθαρισμού συστήματος", url: "https://www.ccleaner.com/" },
+                { name: "Windows Disk Cleanup", desc: "Ενσωματωμένος καθαρισμός (τρέξτε cleanmgr από Start)", url: "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/cleanmgr" },
                 { name: "Malwarebytes", desc: "Σαρωτής malware", url: "https://www.malwarebytes.com/" },
                 { name: "TreeSize Free", desc: "Αναλυτής χώρου δίσκου", url: "https://www.jam-software.com/treesize_free" }
             ]
@@ -1098,7 +1175,7 @@ const diagnosticData = {
                 <p><strong>Pro tip:</strong> Κλωνοποιήστε τον δίσκο σας σε νέο πριν αποτύχει εντελώς.</p>`,
             tools: [
                 { name: "CrystalDiskInfo", desc: "Παρακολούθηση S.M.A.R.T.", url: "https://crystalmark.info/en/software/crystaldiskinfo/" },
-                { name: "Macrium Reflect", desc: "Λογισμικό κλωνοποίησης δίσκου", url: "https://www.macrium.com/reflectfree" },
+                { name: "Clonezilla", desc: "Δωρεάν open-source κλωνοποίηση δίσκου", url: "https://clonezilla.org/" },
                 { name: "Hard Disk Sentinel", desc: "Προηγμένη παρακολούθηση υγείας", url: "https://www.hdsentinel.com/" }
             ]
         },
@@ -1142,7 +1219,7 @@ const diagnosticData = {
                     <li>Σκεφτείτε αντικατάσταση ανεμιστήρα αν ο θόρυβος παραμένει</li>
                 </ul>`,
             tools: [
-                { name: "SpeedFan", desc: "Παρακολούθηση και έλεγχος ταχυτήτων ανεμιστήρα", url: "http://www.almico.com/speedfan.php" },
+                { name: "FanControl", desc: "Σύγχρονο λογισμικό ελέγχου ανεμιστήρων", url: "https://getfancontrol.com/" },
                 { name: "HWiNFO", desc: "Παρακολούθηση hardware", url: "https://www.hwinfo.com/" }
             ]
         },
@@ -1161,9 +1238,10 @@ const diagnosticData = {
                 </ul>
                 <p><strong>Ασφαλείς περιοχές θερμοκρασίας:</strong></p>
                 <ul>
-                    <li>CPU idle: 30-50°C | Φορτίο: 60-80°C</li>
+                    <li>CPU idle: 30-50°C | Φορτίο: 65-85°C (ορισμένοι σύγχρονοι επεξεργαστές φτάνουν ασφαλώς τους 90-95°C)</li>
                     <li>GPU idle: 30-45°C | Φορτίο: 65-85°C</li>
-                </ul>`,
+                </ul>
+                <p><strong>Σημείωση:</strong> Ελέγξτε τις προδιαγραφές του κατασκευαστή CPU/GPU σας για τις μέγιστες ασφαλείς θερμοκρασίες. Οι σύγχρονοι Intel επεξεργαστές (12ης-14ης γενιάς) συχνά τρέχουν πιο ζεστά by design.</p>`,
             tools: [
                 { name: "HWiNFO64", desc: "Παρακολούθηση θερμοκρασίας σε πραγματικό χρόνο", url: "https://www.hwinfo.com/" },
                 { name: "Core Temp", desc: "Παρακολούθηση θερμοκρασίας CPU", url: "https://www.alcpu.com/CoreTemp/" },
